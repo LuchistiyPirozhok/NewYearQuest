@@ -13,15 +13,15 @@
 			{{item.date}} {{item.time}}
 		</div>
 		<div class="buttons">
-			<div class="button">
+			<div class="button" @click="$emit('back')">
 				Назад
 			</div>
 				
-			<div v-if="item.next" class="button">
+			<div :class="{disabled:!item.prev}" class="button"  @click="$emit('prev',item)">
 				Пред.
 			</div>		
 			
-			<div v-if="item.prev" class="button">
+			<div :class="{disabled:!item.next}" class="button" @click="$emit('next',item)">
 				След.
 			</div>
 		</div>
@@ -31,7 +31,7 @@
 		<div class="answer-container">
 			<textarea v-model="answer" rows="4">					
 			</textarea>				
-			<div class="button" :class="{disabled:!answer.length}">
+			<div class="button" :class="{disabled:!answer.length}" @click="$emit('answer',answer)">
 				Ответить
 			</div>
 		</div>

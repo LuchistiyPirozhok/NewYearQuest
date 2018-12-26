@@ -12,12 +12,17 @@
 					<list-comp :items="menuItems" @item-clicked="onMenuClick"></list-comp>
 				</div>
 				<div class="main-block">
-					<div v-if="!selectedMails" style="width: 100%;  height: 100%; background-size: cover"
-						:style="{background:'url('+image+')'}">						
+					<div v-if="!selectedMails" class="placeholder"
+						:style="{backgroundImage:'url('+image+')'}">						
 					</div>
 					<mails-comp v-else-if="!currentMail" :items="selectedMails" @item-clicked="onMailClick"></mails-comp>
 					<mail-viewer v-else 
-								 :item="currentMail">						
+								 :item="currentMail"
+								 @next="currentMail=$event.next"
+								 @prev="currentMail=$event.prev"
+								 @back="currentMail=null"
+								 @answer="handleAnswer"
+								 >						
 					</mail-viewer>
 				</div>			
 			</div>
@@ -25,12 +30,18 @@
 	</div>	
 </template>
 <style scoped>
+	.placeholder{
+		    background-size: cover;
+			background-position-x: 50%;
+			width: 100%;
+			height: 100%;
+	}
+
 	.outer{
 		height: 100%;
 		display: flex;
 		justify-content: center;
 		flex-flow: row;
-	
 	}
 	.container {
 		width:80%;
@@ -92,6 +103,64 @@
 	import mailsComp from "../components/mails-comp/mails-comp.vue"
 	import paralax from "../components/paralax/paralax.vue"
 	import mailViewer from "../components/mail-viewer/mail-viewer.vue"
+	import * as moment from "moment"
+	
+	
+	
+	
+	let scenario = [
+		{
+			theme:"Test1",
+			from:"Lorem",
+			to:"Ipsum",
+			date:"31.12.2018",
+			time:"15:36",
+			message:"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+			validate(mail){
+				return mail=="test"
+			},
+			tips:["tip1"],
+			idx:0
+		}	
+	];
+	
+	let wrong = [
+		"Да нет же..."
+	];
+	
+	let inbox = [];
+	let outbox = [];
+	let spam = [];
+	let removed = [];
+	
+	let inboxMenu = {
+		name:"Входящие",
+		hasNew:false,
+		items:inbox
+	};
+	let outboxMenu = {
+		name:"Исходящие",
+		hasNew:false,
+		items:outbox
+	};
+	let spamMenu = {
+		name:"Спам",
+		hasNew:false,
+		items:spam,
+		hideCapcity:true						
+	};
+	let removedMenu = {
+		name:"Корзина",
+		hasNew:false,
+		items:removed
+	};
+	
+	setTimeout(function(){
+		inbox.push(scenario[0]);
+	},1000);
+	
+	
+	
 	export default {
 		components:{
 			listComp,
@@ -107,6 +176,54 @@
 			},
 			onMailClick(event){
 				this.currentMail=event;
+			},
+			handleAnswer(answer){
+				let current = this.currentMail;
+				let outboxMsg = this.createMsg(current,answer);
+				
+				outbox.push(outboxMsg);
+				this.$set(current,"next",outboxMsg);
+				
+				let valid = current.validate(answer);
+				let nextMsg;
+				if(valid){
+					nextMsg = scenario[current.idx+1];
+				}else{
+					let tips = current.tips;
+					if(tips.length){								  
+						nextMsg = this.createMsg(outboxMsg, tips.splice(0,1)[0]);
+					}else{
+						let idx = Math.floor(Math.random() * wrong.length);
+						nextMsg = this.createMsg(outboxMsg, wrong[idx]);
+					}
+					nextMsg.validate = current.validate;
+					nextMsg.tips = current.tips;
+					nextMsg.idx = current.idx;
+					
+				}
+				let that = this;
+				setTimeout(()=>{
+					that.$set(outboxMsg,"next",nextMsg);
+					that.$set(nextMsg,"prev",outboxMsg);
+					inbox.push(nextMsg);
+					inboxMenu.hasNew = true;
+					
+				},1000);
+				
+				
+			},
+			createMsg(current,answer){
+				let now = new Date();
+				let msg = {
+					theme:current.theme,
+					from:current.to,
+					to:current.from,
+					date:moment(now).format("DD.MM.YYYY"),
+					time:moment(now).format("HH:mm"),
+					message:answer,
+					prev:current
+				}
+				return msg;
 			}
 		},
 		data(){
@@ -116,54 +233,10 @@
 				selectedMails:null,
 				currentMail:null,
 				menuItems:[
-					{
-						name:"Входящие",
-						hasNew:false,
-						items:[
-							{
-								theme:"Test1",
-								from:"Lorem",
-								to:"Ipsum",
-								date:"31.12.2018",
-								time:"15:36",
-								message:"Lorem ipsum dolor sit amet, consectetur adipiscing elit." 
-							},
-							{
-							
-								theme:"Test2",
-								from:"Lorem",
-								to:"Ipsum",
-								date:"31.12.2018",
-								time:"15:36",
-								message:"Lorem ipsum dolor sit amet, consectetur adipiscing elit." 
-							},
-							{
-							
-								theme:"Test3",
-								from:"Lorem",
-								to:"Ipsum",
-								date:"31.12.2018",
-								time:"15:36",
-								message:"Lorem ipsum dolor sit amet, consectetur adipiscing elit." 
-							}										
-						]
-					},
-					{
-						name:"Исходящие",
-						hasNew:true,
-						items:[]
-					},
-					{
-						name:"Спам",
-						hasNew:false,
-						items:[],
-						hideCapcity:true						
-					},
-					{
-						name:"Корзина",
-						hasNew:false,
-						items:[]
-					}
+					inboxMenu,
+					outboxMenu,
+					spamMenu,
+					removedMenu
 				],
 				
 			}

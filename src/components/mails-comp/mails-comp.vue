@@ -23,7 +23,7 @@
 				</tr>
 			</tbody>
 		</table>
-		<div v-else :style="{background:'url('+empty+')'}" style="width:100%;height:100%"></div>
+		<div v-else :style="{backgroundImage:'url('+empty+')'}" class="placeholder"></div>
 	</div>
 	
 </template>
@@ -51,6 +51,12 @@
 	}
 </script>
 <style scoped>
+    .placeholder{
+		    background-size: cover;
+			background-position-x: 50%;
+			width: 100%;
+			height: 100%;
+	}
 	.table-container{
 		width: calc(100% - 50px);
 		height: calc(100% - 32px);
